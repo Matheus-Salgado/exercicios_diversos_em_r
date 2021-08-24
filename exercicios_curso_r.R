@@ -112,9 +112,102 @@ sem_na <- imdb %>%
   filter(!is.na(orcamento), !is.na(receita)) # nao tera nenhuma NA nessas colunas
 
 
-# parei no tópico 7.2.5
+# Crie uma coluna chamada prejuizo (orcamento - receita) e salve a nova tabela em um objeto chamado imdb_prejuizo.
+#Em seguida, filtre apenas os filmes que deram prejuízo e ordene a tabela por ordem crescente de prejuízo.
 
 
+imdb_prejuizo <- imdb %>%
+  mutate(prejuizo = orcamento - receita) 
+
+imdb_prejuizo %>%
+  filter(prejuizo > 0) %>%
+  arrange(prejuizo)
+
+# Fazendo apenas uma chamada da função mutate(), crie as seguintes colunas novas na base imdb:
+
+a<-imdb %>%
+  mutate(lucro = receita - orcamento,
+         lucro_medio = mean(lucro, na.rm = TRUE), 
+         lucro_relativo = (lucro - lucro_medio)/lucro_medio, 
+         houve_lucro = ifelse(lucro > 0, "sim", "nao")
+  )
+
+#  Crie uma nova coluna que classifique o filme em "recente" (posterior a 2000) e "antigo" (de 2000 para trás).
+
+imdb %>%
+  mutate(tempo = ifelse (ano > 2000, "recente", "antigo")) %>%
+  group_by(tempo) %>%
+  filter(!is.na(receita)) %>%
+  summarise(receita_media = mean(receita, na.rm = TRUE))
+
+
+?summarise
+
+
+# Calcule a duração média e mediana dos filmes da base
+
+imdb %>%
+  summarise(media_duracao = mean(duracao, na.rm = TRUE), 
+            mediana_duracao = median(duracao, na.rm = TRUE))
+
+# Calcule o lucro médio dos filmes com duração menor que 60 minutos.
+
+imdb %>%
+  filter(duracao < 60) %>%
+  mutate(lucro = receita - orcamento) %>%
+  summarise(lucro_medio = mean(lucro, na.rm = TRUE))
+
+
+# Apresente na mesma tabela o lucro médio dos filmes com duracao menor que 60 minutos e o
+# lucro médio dos filmes com duracao maior ou igual a 60 minutos.
+
+imdb %>%
+  mutate(
+    tempo_filme = ifelse(duracao >= 60, "longo", "curto"),
+    lucro = receita - orcamento
+  ) %>%
+  group_by(tempo_filme) %>%
+  filter(!is.na(lucro)) %>%
+  summarise(lucro_medio = mean(lucro, na.rm = TRUE))
+
+# Retorne tabelas (tibbles) apenas com:
+
+# a nota IMDB média dos filmes por tipo de classificacao;
+
+imdb %>%
+  group_by(classificacao) %>%
+  summarise(nota_media = mean(nota_imdb))
+
+# a receita média e mediana dos filmes por ano;
+
+imdb %>%
+  group_by(ano) %>%
+  filter(!is.na(ano) & !is.na(receita)) %>%
+  summarise(receita_media = mean(receita, na.rm = TRUE),
+            receita_mediana = median(receita, na.rm = TRUE)
+            )
+
+# apenas o nome dos diretores com mais de 10 filmes.
+
+imdb %>%
+  filter(!is.na(diretor)) %>%
+  group_by(diretor) %>%
+  summarise(num_filmes = n() ) %>%
+  filter(num_filmes > 10) %>%
+  select(diretor)
+
+# Salve em um novo objeto uma tabela com a nota média dos filmes de cada diretor.
+#Essa tabela deve conter duas colunas (diretor e nota_imdb_media) e cada linha deve ser um diretor diferente.
+
+
+media_diretores <- imdb %>%
+  group_by(diretor) %>%
+  summarise(nota_imdb_diretor = mean(nota_imdb, na.rm = TRUE))
+
+# Use o left_join() para trazer a coluna nota_imdb_media da tabela do item anterior para a tabela imdb original.
+
+imdb <- imdb %>%
+  left_join(media_diretores, by = "diretor")
 
 
 
